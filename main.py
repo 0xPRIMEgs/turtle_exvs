@@ -1,6 +1,9 @@
-import sys, pygame, math, time, random
+import sys, pygame, math, time, random, csv
+
+debug = False
 
 def main():
+
     print("Hello from turtle-exvs!")
     pygame.init()
 
@@ -37,81 +40,14 @@ def main():
 
     flicker = False
 
-    arena_arr = [
-        [0] * 60 for _ in range(32)
-    ]
+    arena_arr = []
 
-    arena_arr[0][0:60] = [1] * 60
-    arena_arr[31][0:60] = [1] * 60
+    with open("arena.csv", "r") as file:
+        reader = csv.reader(file)
+        for row in reader:
+            arena_arr.append([int(cell) for cell in row])  # Convert strings to integers
 
-
-    #todo: load from text file
-    for row in arena_arr:
-        row[0] = 1  # Left wall
-        row[59] = 1  # Right wall
-
-    # Original pattern placement adjusted for new size
-    # Top-right corner (original placement)
-    arena_arr[5][5:9] = [1, 1, 1, 1]
-    arena_arr[5][19:21] = [1, 1]
-    arena_arr[6][5] = 1
-    arena_arr[6][19:21] = [1, 1]
-    arena_arr[7][5] = 1
-    arena_arr[9][12:14] = [1, 1]
-    arena_arr[10][12:14] = [1, 1]
-    arena_arr[12][20] = 1
-    arena_arr[13][5:7] = [1, 1]
-    arena_arr[13][20] = 1
-    arena_arr[14][5:7] = [1, 1]
-    arena_arr[14][17:21] = [1, 1, 1, 1]
-
-    # **Bottom-right corner**
-    shift_down = 15
-    arena_arr[5 + shift_down][5:9] = [1, 1, 1, 1]
-    arena_arr[5 + shift_down][19:21] = [1, 1]
-    arena_arr[6 + shift_down][5] = 1
-    arena_arr[6 + shift_down][19:21] = [1, 1]
-    arena_arr[7 + shift_down][5] = 1
-    arena_arr[9 + shift_down][12:14] = [1, 1]
-    arena_arr[10 + shift_down][12:14] = [1, 1]
-    arena_arr[12 + shift_down][20] = 1
-    arena_arr[13 + shift_down][5:7] = [1, 1]
-    arena_arr[13 + shift_down][20] = 1
-    arena_arr[14 + shift_down][5:7] = [1, 1]
-    arena_arr[14 + shift_down][17:21] = [1, 1, 1, 1]
-
-    # **Top-left corner**
-    shift_right = 33
-    arena_arr[5][5 + shift_right:9 + shift_right] = [1, 1, 1, 1]
-    arena_arr[5][19 + shift_right:21 + shift_right] = [1, 1]
-    arena_arr[6][5 + shift_right] = 1
-    arena_arr[6][19 + shift_right:21 + shift_right] = [1, 1]
-    arena_arr[7][5 + shift_right] = 1
-    arena_arr[9][12 + shift_right:14 + shift_right] = [1, 1]
-    arena_arr[10][12 + shift_right:14 + shift_right] = [1, 1]
-    arena_arr[12][20 + shift_right] = 1
-    arena_arr[13][5 + shift_right:7 + shift_right] = [1, 1]
-    arena_arr[13][20 + shift_right] = 1
-    arena_arr[14][5 + shift_right:7 + shift_right] = [1, 1]
-    arena_arr[14][17 + shift_right:21 + shift_right] = [1, 1, 1, 1]
-
-    # **Bottom-left corner**
-    arena_arr[5 + shift_down][5 + shift_right:9 + shift_right] = [1, 1, 1, 1]
-    arena_arr[5 + shift_down][19 + shift_right:21 + shift_right] = [1, 1]
-    arena_arr[6 + shift_down][5 + shift_right] = 1
-    arena_arr[6 + shift_down][19 + shift_right:21 + shift_right] = [1, 1]
-    arena_arr[7 + shift_down][5 + shift_right] = 1
-    arena_arr[9 + shift_down][12 + shift_right:14 + shift_right] = [1, 1]
-    arena_arr[10 + shift_down][12 + shift_right:14 + shift_right] = [1, 1]
-    arena_arr[12 + shift_down][20 + shift_right] = 1
-    arena_arr[13 + shift_down][5 + shift_right:7 + shift_right] = [1, 1]
-    arena_arr[13 + shift_down][20 + shift_right] = 1
-    arena_arr[14 + shift_down][5 + shift_right:7 + shift_right] = [1, 1]
-    arena_arr[14 + shift_down][17 + shift_right:21 + shift_right] = [1, 1, 1, 1]
-    #end todo
     arena_tile_size = 32
-
-
 
     actors = []
     actors.append(Actor(64, 64, 64, 0, None))
@@ -122,9 +58,6 @@ def main():
     actors[1].target = actors[3]
     actors[2].target = actors[3]
     scroll = 0
-
-
-
 
     while True:
         for a in actors:
@@ -330,7 +263,8 @@ def bot_movement(a, p, b, min, max, bravery):
                                 if test[i] > min and test[i] < max:
                                     found_move = True
                                     wid = i
-        print(f"Current dist: {test[4]}")
+        if debug:
+            print(f"Current dist: {test[4]}")
         b.bot_last_movement = mov[wid]
         return mov[wid]
     else:
@@ -458,7 +392,8 @@ class Actor:
             if arena_map_array[tile_y][tile_x] != 0:
                 result = 9
 
-        print(f"Checking movement: {move_array}, arena value: {arena_map_array[tile_y][tile_x] if tile_x >= 0 and tile_y >= 0 else 'out of bounds'}")
+        if debug:
+            print(f"Checking movement: {move_array}, arena value: {arena_map_array[tile_y][tile_x] if tile_x >= 0 and tile_y >= 0 else 'out of bounds'}")
 
         self.x = prev_x
         self.y = prev_y
