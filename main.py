@@ -465,7 +465,7 @@ while True:
 
 
     screen.fill(black)
-    screen.blit(arena)
+    screen.blit(arena, (0,0))
 
 
     scroll_size = 1000
