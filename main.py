@@ -1,30 +1,25 @@
 import sys, pygame, math, time, random, csv
+from actor import Actor
+from bullet import Bullet
 
 debug = False
 
 def main():
-
     print("Hello from turtle-exvs!")
     pygame.init()
 
     size = width, height = 640, 480
     black = 0, 0, 0
+    flicker = False
 
     screen = pygame.display.set_mode(size, pygame.SHOWN)
     clock = pygame.time.Clock()
-
-
-
     internal_surface = pygame.Surface((1920,1080))
-
-
 
     ship = [
             [img("turtle1w.png"),img("turtle1s.png"),img("turtle1a.png"),img("turtle1d.png")],
             [img("turtle2w.png"),img("turtle2s.png"),img("turtle2a.png"),img("turtle2d.png")]
     ]
-
-    a_on = img("on.png")
 
     lock_imgs = [
         [ img("lock_red.png"), img("lock_green.png") ],
@@ -33,12 +28,10 @@ def main():
         [ img("lock4_red.png"), img("lock4_green.png") ],
     ]
 
+    a_on = img("on.png")
     bullet = img("bullet.png")
     beam = img("beam.png")
-
     sky = img("sky_seamless_texture_5921.jpg")
-
-    flicker = False
 
     arena_arr = []
 
@@ -88,10 +81,10 @@ def main():
         actors[3].lock_on(actors, 1)
 
         if keys[pygame.K_e]:
-            actors[0].shoot_a()
+            actors[0].shoot_a(add_bullet)
 
         if keys[pygame.K_r]:
-            actors[0].shoot_b()
+            actors[0].shoot_b(add_bullet)
 
         if keys[pygame.K_t]:
             if actors[0].target == actors[1]:
@@ -190,9 +183,9 @@ def bot_action(a, p, b, min, max):
 
     if dist > min and dist < max:
         if b.bot_shot_choice == 1: 
-            b.shoot_a()
+            b.shoot_a(add_bullet)
         if b.bot_shot_choice == 2: 
-            b.shoot_b()
+            b.shoot_b(add_bullet)
 
     if b.weapon_ammo_a <= 0:
         bravery -= 50
@@ -269,194 +262,6 @@ def bot_movement(a, p, b, min, max, bravery):
         return mov[wid]
     else:
         return b.bot_last_movement
-    
-
-
-
-
-
-class Bullet:
-    def __init__(self, x, y, angle, speed, lifetime):
-        self.x = x
-        self.y = y
-        self.angle = math.radians(angle - 90)  # Convert to radians for movement
-        self.speed = speed
-        self.creation_time = time.time()
-        self.lifetime = lifetime
-
-    def move(self, arena_arr):
-        self.x -= math.cos(self.angle) * self.speed
-        self.y += math.sin(self.angle) * self.speed
-
-        one_over_tile_size = 1/32
-        bullet_size = 4
-        
-        bullet_tile_x, bullet_tile_y = math.floor((self.x) * one_over_tile_size),math.floor((self.y) * one_over_tile_size)
-        if arena_arr[bullet_tile_y][bullet_tile_x] != 0:
-            self.lifetime = 0
-
-        bullet_tile_x, bullet_tile_y = math.floor((self.x + bullet_size) * one_over_tile_size),math.floor((self.y + bullet_size) * one_over_tile_size)
-        if arena_arr[bullet_tile_y][bullet_tile_x] != 0:
-            self.lifetime = 0
-
-
-    def is_expired(self):
-        return time.time() - self.creation_time > self.lifetime
-
-
-
-
-class Actor:
-    def __init__(self, x, y, size, team, target):
-        self.x = x
-        self.y = y
-        self.angle = 0
-        self.direction = 0
-        self.size = size
-        self.bullets = []
-        self.beams = []
-        self.flames = []
-        self.team = team
-        self.speed = 8
-
-        self.target = target
-        self.lock_type = 0
-
-        self.weapon_ammo_a = 25
-        self.weapon_ammo_max_a = 25
-        self.reload_timer_a = 1
-        self.last_reload_a = 0 
-
-        self.weapon_ammo_b = 5
-        self.weapon_ammo_max_b = 5
-        self.cool_down_b = 0.5
-        self.last_shot_b = 0
-        self.reload_timer_b = 1
-        self.last_reload_b = 0 
-
-        self.bot_timer = 0.5
-        self.bot_last_movement = [False,False,False,False]
-        self.bot_last_update_time = 0
-        self.bot_shot_choice = 0
-
-    def pos(self):
-        return (self.x, self.y)
-
-    def get_tile_occupied(self, arena_map_array):
-        one_over_tile_size = 1/32
-        tile_x, tile_y = math.floor((self.x) * one_over_tile_size),math.floor((self.y) * one_over_tile_size)
-
-        if tile_y < len(arena_map_array):
-            if tile_x < len(arena_map_array[tile_y]):
-                return (tile_x, tile_y)
-
-        return (-1,-1)
-    
-    def shoot_a(self):
-         if self.weapon_ammo_a > 0:
-            spread = 1
-            na = self.angle + (random.randrange(-10, 10) * spread)
-            add_bullet(self.bullets, self.pos(), na, 5, 3)  # Add a point moving at 45 degrees at speed 5, lasting 3 seconds
-            self.weapon_ammo_a -= 1
-            if self.weapon_ammo_a == 0:
-                self.last_reload_a = time.time()
-
-    def shoot_b(self):
-         if time.time() - self.last_shot_b > self.cool_down_b:
-            if self.weapon_ammo_b > 0:
-                for i in range(10):
-                    add_bullet(self.beams, self.pos(), self.angle, 5 - (i * 0.1), 3)  # Add a point moving at 45 degrees at speed 5, lasting 3 seconds
-                self.weapon_ammo_b -= 1
-                self.last_shot_b = time.time()
-                if self.weapon_ammo_b == 0:
-                    self.last_reload_b = time.time()
-
-    def map_collision_check(self, arena_map_array, move_array, speed):
-        result = 1
-        prev_x, prev_y = self.x, self.y
-
-        if move_array[2]:
-            self.x -= speed
-        elif move_array[3]:
-            self.x += speed
-
-        if move_array[0]:
-            self.y -= speed
-        elif move_array[1]:
-            self.y += speed
-
-        
-        tile_x, tile_y = self.get_tile_occupied(arena_map_array)
-
-        if tile_x >= 0 and tile_y >= 0:
-            if arena_map_array[tile_y][tile_x] != 0:
-                result = 9
-
-        if debug:
-            print(f"Checking movement: {move_array}, arena value: {arena_map_array[tile_y][tile_x] if tile_x >= 0 and tile_y >= 0 else 'out of bounds'}")
-
-        self.x = prev_x
-        self.y = prev_y
-
-        return result
-
-
-    def move(self, arena_map_array, move_array):
-        ppx, ppy = self.x, self.y
-        if move_array[2]:
-            self.direction = 2
-            self.x -= self.speed
-        elif move_array[3]:
-            self.direction = 3
-            self.x += self.speed
-
-        tile_x, tile_y = self.get_tile_occupied(arena_map_array)
-
-        if tile_x >= 0 and tile_y >= 0:
-            if arena_map_array[tile_y][tile_x] != 0:
-                self.x = ppx
-
-        if move_array[0]:
-            self.direction = 0
-            self.y -= self.speed
-        elif move_array[1]:
-            self.direction = 1
-            self.y += self.speed
-
-        tile_x, tile_y = self.get_tile_occupied(arena_map_array)
-
-        if tile_x >= 0 and tile_y >= 0:
-            if arena_map_array[tile_y][tile_x] != 0:
-                self.y = ppy
-
-    def update(self):
-        if self.weapon_ammo_a == 0:
-            if time.time() - self.last_reload_a > self.reload_timer_a:
-                self.weapon_ammo_a = self.weapon_ammo_max_a
-
-        if self.weapon_ammo_b == 0:
-            if time.time() - self.last_reload_b > self.reload_timer_b:
-                self.weapon_ammo_b = self.weapon_ammo_max_b
-
-        dist = math.sqrt((self.x - self.target.x) ** 2 + (self.y - self.target.y) ** 2)
-        if dist < 360:
-            self.lock_type = 1
-        else:
-            self.lock_type = 0
-
-    def center(self):
-        return (self.x + (self.size * 0.5), self.y + (self.size * 0.5))
-
-    def lock_on(self, actor, index):
-        self.angle = angle_to_point(self.center(),actor[index].center())
-
-    def is_expired(self):
-        return time.time() - self.creation_time > self.lifetime
-
-
-
-
-
 
 if __name__ == "__main__":
     main()
