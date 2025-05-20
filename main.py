@@ -126,14 +126,15 @@ class Bullet:
         self.x -= math.cos(self.angle) * self.speed
         self.y += math.sin(self.angle) * self.speed
 
-        mtn = 1/32
-        p_size = 4
-        ptx, pty = math.floor((self.x) * mtn),math.floor((self.y) * mtn)
-        if arena_arr[pty][ptx] != 0:
+        one_over_tile_size = 1/32
+        bullet_size = 4
+        
+        bullet_tile_x, bullet_tile_y = math.floor((self.x) * one_over_tile_size),math.floor((self.y) * one_over_tile_size)
+        if arena_arr[bullet_tile_y][bullet_tile_x] != 0:
             self.lifetime = 0
 
-        ptx, pty = math.floor((self.x + p_size) * mtn),math.floor((self.y + p_size) * mtn)
-        if arena_arr[pty][ptx] != 0:
+        bullet_tile_x, bullet_tile_y = math.floor((self.x + bullet_size) * one_over_tile_size),math.floor((self.y + bullet_size) * one_over_tile_size)
+        if arena_arr[bullet_tile_y][bullet_tile_x] != 0:
             self.lifetime = 0
 
 
@@ -142,29 +143,29 @@ class Bullet:
 
 # Example usage
 #add_bullet(100, 100, 45, 5, 3)  # Add a point moving at 45 degrees at speed 5, lasting 3 seconds
-def add_bullet(b, p, angle, speed, lifetime):
-    x, y  = p
-    b.append(Bullet(x, y, angle, speed, lifetime))
+def add_bullet(bullet_array, spawn_point, angle, speed, lifetime):
+    x, y  = spawn_point
+    bullet_array.append(Bullet(x, y, angle, speed, lifetime))
 
-def update_bullets(b, arena_arr):
-    for point in b[:]:  # Iterate over a copy to allow safe removal
-        point.move(arena_arr)
-        if point.is_expired():
-            b.remove(point)
+def update_bullets(bullet_array, arena_arr):
+    for bullet in bullet_array[:]:  # Iterate over a copy to allow safe removal
+        bullet.move(arena_arr)
+        if bullet.is_expired():
+            bullet_array.remove(bullet)
 
-def angle_to_point(p, tp):
-    x,y = p
-    tx, ty = tp
-    dx = tx - x
-    dy = ty - y
+def angle_to_point(point, target_point):
+    x,y = point
+    target_x, target_y = target_point
+    dist_x = target_x - x
+    dist_y = target_y - y
 
-    angle = math.atan2(dx, dy)
+    angle = math.atan2(dist_x, dist_y)
     angle_degrees = math.degrees(angle)
 
     return angle_degrees + 180
 
-def rot_center(image, angle, c):
-    x,y = c
+def rot_center(image, angle, center):
+    x,y = center
 
     rotated_image = pygame.transform.rotate(image, angle)
     new_rect = rotated_image.get_rect(center = image.get_rect(center = (x, y)).center)
