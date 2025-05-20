@@ -11,43 +11,39 @@ clock = pygame.time.Clock()
 
 internal_surface = pygame.Surface((1920,1080))
 
-
+def img(s): #pygame.image.load(s) wrapper to simplify loading images and declutter top part of code.
+    return pygame.image.load(s)
 
 ship = [
-        [pygame.image.load("turtle1w.png"),pygame.image.load("turtle1s.png"),pygame.image.load("turtle1a.png"),pygame.image.load("turtle1d.png")],
-        [pygame.image.load("turtle2w.png"),pygame.image.load("turtle2s.png"),pygame.image.load("turtle2a.png"),pygame.image.load("turtle2d.png")]
+        [img("turtle1w.png"),img("turtle1s.png"),img("turtle1a.png"),img("turtle1d.png")],
+        [img("turtle2w.png"),img("turtle2s.png"),img("turtle2a.png"),img("turtle2d.png")]
 ]
-ball = pygame.image.load("ship_bottom.png")
-flames = [pygame.image.load("flame_w.png"),pygame.image.load("flame_s.png"),pygame.image.load("flame_a.png"),pygame.image.load("flame_d.png")]
-arena = pygame.image.load("meta-arena.png")
 
-a_on = pygame.image.load("on.png")
-a_off = pygame.image.load("off.png")
+a_on = img("on.png")
 
 lock_imgs = [
-    [ pygame.image.load("lock_red.png"), pygame.image.load("lock_green.png") ],
-    [ pygame.image.load("lock2_red.png"), pygame.image.load("lock2_green.png") ],
-    [ pygame.image.load("lock3_red.png"), pygame.image.load("lock3_green.png") ],
-    [ pygame.image.load("lock4_red.png"), pygame.image.load("lock4_green.png") ],
+    [ img("lock_red.png"), img("lock_green.png") ],
+    [ img("lock2_red.png"), img("lock2_green.png") ],
+    [ img("lock3_red.png"), img("lock3_green.png") ],
+    [ img("lock4_red.png"), img("lock4_green.png") ],
 ]
 
-bullet = pygame.image.load("bullet.png")
-beam = pygame.image.load("beam.png")
+bullet = img("bullet.png")
+beam = img("beam.png")
 
-sky = pygame.image.load("sky_seamless_texture_5921.jpg")
+sky = img("sky_seamless_texture_5921.jpg")
 
 flicker = False
-new_size = (64, 64)
-#ship = pygame.transform.smoothscale(ship, new_size)
 
 arena_arr = [
     [0] * 60 for _ in range(32)
 ]
 
-
 arena_arr[0][0:60] = [1] * 60
 arena_arr[31][0:60] = [1] * 60
 
+
+#todo: load from text file
 for row in arena_arr:
     row[0] = 1  # Left wall
     row[59] = 1  # Right wall
@@ -110,7 +106,7 @@ arena_arr[13 + shift_down][5 + shift_right:7 + shift_right] = [1, 1]
 arena_arr[13 + shift_down][20 + shift_right] = 1
 arena_arr[14 + shift_down][5 + shift_right:7 + shift_right] = [1, 1]
 arena_arr[14 + shift_down][17 + shift_right:21 + shift_right] = [1, 1, 1, 1]
-
+#end todo
 arena_tile_size = 32
 
 class Bullet:
@@ -209,13 +205,13 @@ class Actor:
     def pos(self):
         return (self.x, self.y)
 
-    def tpos(self, a):
-        mtn = 1/32
-        ptx, pty = math.floor((self.x) * mtn),math.floor((self.y) * mtn)
+    def get_tile_occupied(self, arena_map_array):
+        one_over_tile_size = 1/32
+        tile_x, tile_y = math.floor((self.x) * one_over_tile_size),math.floor((self.y) * one_over_tile_size)
 
-        if pty < len(a):
-            if ptx < len(a[pty]):
-                return (ptx, pty)
+        if tile_y < len(arena_map_array):
+            if tile_x < len(arena_map_array[tile_y]):
+                return (tile_x, tile_y)
 
         return (-1,-1)
     
@@ -238,62 +234,61 @@ class Actor:
                 if self.weapon_ammo_b == 0:
                     self.last_reload_b = time.time()
 
-    def m_check(self, arena_arr, m, s):
+    def map_collision_check(self, arena_map_array, move_array, speed):
         result = 1
-        ppx, ppy = self.x, self.y
+        prev_x, prev_y = self.x, self.y
 
-        if m[2]:
-            self.x -= s
-        elif m[3]:
-            self.x += s
+        if move_array[2]:
+            self.x -= speed
+        elif move_array[3]:
+            self.x += speed
 
-        if m[0]:
-            self.y -= s
-        elif m[1]:
-            self.y += s
+        if move_array[0]:
+            self.y -= speed
+        elif move_array[1]:
+            self.y += speed
 
-        mtn = 1/32
-        ptx, pty = self.tpos(arena_arr)
+        
+        tile_x, tile_y = self.get_tile_occupied(arena_map_array)
 
-        if ptx >= 0 and pty >= 0:
-            if arena_arr[pty][ptx] != 0:
+        if tile_x >= 0 and tile_y >= 0:
+            if arena_map_array[tile_y][tile_x] != 0:
                 result = 9
 
-        print(f"Checking movement: {m}, arena value: {arena_arr[pty][ptx] if ptx >= 0 and pty >= 0 else 'out of bounds'}")
+        print(f"Checking movement: {move_array}, arena value: {arena_map_array[tile_y][tile_x] if tile_x >= 0 and tile_y >= 0 else 'out of bounds'}")
 
-        self.x = ppx
-        self.y = ppy
+        self.x = prev_x
+        self.y = prev_y
 
         return result
 
 
-    def move(self, arena_arr, m):
+    def move(self, arena_map_array, move_array):
         ppx, ppy = self.x, self.y
-        if m[2]:
+        if move_array[2]:
             self.direction = 2
             self.x -= self.speed
-        elif m[3]:
+        elif move_array[3]:
             self.direction = 3
             self.x += self.speed
 
-        mtn = 1/32
-        ptx, pty = self.tpos(arena_arr)
+        tile_x, tile_y = self.get_tile_occupied(arena_map_array)
 
-        if ptx >= 0 and pty >= 0:
-            if arena_arr[pty][ptx] != 0:
+        if tile_x >= 0 and tile_y >= 0:
+            if arena_map_array[tile_y][tile_x] != 0:
                 self.x = ppx
 
-        if m[0]:
+        if move_array[0]:
             self.direction = 0
             self.y -= self.speed
-        elif m[1]:
+        elif move_array[1]:
             self.direction = 1
             self.y += self.speed
 
-        ptx, pty = self.tpos(arena_arr)
+        tile_x, tile_y = self.get_tile_occupied(arena_map_array)
 
-        if ptx >= 0 and pty >= 0:
-            if arena_arr[pty][ptx] != 0:
+        if tile_x >= 0 and tile_y >= 0:
+            if arena_map_array[tile_y][tile_x] != 0:
                 self.y = ppy
 
     def update(self):
@@ -314,8 +309,8 @@ class Actor:
     def center(self):
         return (self.x + (self.size * 0.5), self.y + (self.size * 0.5))
 
-    def lock_on(self, a, id):
-        self.angle = angle_to_point(self.center(),a[id].center())
+    def lock_on(self, actor, index):
+        self.angle = angle_to_point(self.center(),actor[index].center())
 
     def is_expired(self):
         return time.time() - self.creation_time > self.lifetime
@@ -388,8 +383,8 @@ def bot_movement(a, p, b, min, max, bravery):
             if not found_move:
                 bs = j
                 for i in range(9):
-                    fa = test[wid] * b.m_check(a, mov[wid], bs)
-                    fb = test[i] * b.m_check(a, mov[i], bs)
+                    fa = test[wid] * b.map_collision_check(a, mov[wid], bs)
+                    fb = test[i] * b.map_collision_check(a, mov[i], bs)
 
                     if test[4] > max:
                         if fb < fa:
@@ -413,7 +408,7 @@ def bot_movement(a, p, b, min, max, bravery):
                                 btest = True
 
                         if btest:
-                            if b.m_check(a, mov[i], bs) < 9: #wall blocking map
+                            if b.map_collision_check(a, mov[i], bs) < 9: #wall blocking map
                                 if test[i] > min and test[i] < max:
                                     found_move = True
                                     wid = i
@@ -465,8 +460,6 @@ while True:
 
 
     screen.fill(black)
-    screen.blit(arena)
-
 
     scroll_size = 1000
     scroll_x = scroll % scroll_size
