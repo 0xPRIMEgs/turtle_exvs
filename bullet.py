@@ -8,10 +8,31 @@ class Bullet:
         self.speed = speed
         self.creation_time = time.time()
         self.lifetime = lifetime
+        self.target = None
 
-    def move(self, arena_arr):
-        self.x -= math.cos(self.angle) * self.speed
-        self.y += math.sin(self.angle) * self.speed
+    def move(self, arena_arr, angle_to_point):
+        locked_on = False
+        if self.target != None:
+            if time.time() - self.creation_time > (self.lifetime * 0.25):
+                locked_on = True
+                
+
+            dist = math.sqrt((self.x - self.target.x) ** 2 + (self.y - self.target.y) ** 2)
+            if dist > 360:
+                locked_on = False
+
+
+
+        if locked_on:
+            #todo: figure out why this didn't work
+            #self.angle = angle_to_point((self.x,self.y),(self.target.x,self.target.y))
+            if self.x < self.target.x: self.x += self.speed
+            if self.x > self.target.x: self.x -= self.speed
+            if self.y < self.target.y: self.y += self.speed
+            if self.y > self.target.y: self.y -= self.speed
+        else:
+            self.x -= math.cos(self.angle) * self.speed
+            self.y += math.sin(self.angle) * self.speed
 
         one_over_tile_size = 1/32
         bullet_size = 4

@@ -70,10 +70,10 @@ class Actor:
                 if self.weapon_ammo_b == 0:
                     self.last_reload_b = time.time()
 
-    def shoot_c(self, add_bullet):
+    def shoot_c(self, add_missile):
          if self.weapon_ammo_c > 0:
             for i in range(8):
-                add_bullet(self.missiles, self.pos(), (self.angle - 40) + (10 * i), 6, 5)  # Add a point moving at 45 degrees at speed 5, lasting 3 seconds
+                add_missile(self.missiles, self.target, self.pos(), (self.angle - 40) + (10 * i), 6, 5)  # Add a point moving at 45 degrees at speed 5, lasting 3 seconds
             self.weapon_ammo_c -= 1
             if self.weapon_ammo_c == 0:
                 self.last_reload_c = time.time()

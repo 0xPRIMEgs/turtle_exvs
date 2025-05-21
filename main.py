@@ -89,7 +89,7 @@ def main():
             actors[0].shoot_b(add_bullet)
 
         if keys[pygame.K_f]:
-            actors[0].shoot_c(add_bullet)
+            actors[0].shoot_c(add_missile)
 
         if keys[pygame.K_t]:
             if actors[0].target == actors[1]:
@@ -153,9 +153,15 @@ def add_bullet(bullet_array, spawn_point, angle, speed, lifetime):
     x, y  = spawn_point
     bullet_array.append(Bullet(x, y, angle, speed, lifetime))
 
+def add_missile(bullet_array, target, spawn_point, angle, speed, lifetime):
+    x, y  = spawn_point
+    temp = Bullet(x, y, angle, speed, lifetime)
+    temp.target = target
+    bullet_array.append(temp)
+
 def update_bullets(bullet_array, arena_arr):
     for bullet in bullet_array[:]:  # Iterate over a copy to allow safe removal
-        bullet.move(arena_arr)
+        bullet.move(arena_arr, angle_to_point)
         if bullet.is_expired():
             bullet_array.remove(bullet)
 
@@ -195,7 +201,7 @@ def bot_action(a, p, b, min, max):
         if b.bot_shot_choice == 2: 
             b.shoot_b(add_bullet)
         if b.bot_shot_choice == 3: 
-            b.shoot_c(add_bullet)
+            b.shoot_c(add_missile)
 
     if b.weapon_ammo_a <= 0:
         bravery -= 25
