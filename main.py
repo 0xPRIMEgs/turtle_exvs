@@ -31,6 +31,7 @@ def main():
     a_on = img("on.png")
     bullet = img("bullet.png")
     beam = img("beam.png")
+    missile = img("missile.png")
     sky = img("sky_seamless_texture_5921.jpg")
 
     arena_arr = []
@@ -57,6 +58,7 @@ def main():
             a.update()
             update_bullets(a.bullets, arena_arr)
             update_bullets(a.beams, arena_arr)
+            update_bullets(a.missiles, arena_arr)
 
         flicker = (not flicker)
         pf = [False,False,False,False]
@@ -85,6 +87,9 @@ def main():
 
         if keys[pygame.K_r]:
             actors[0].shoot_b(add_bullet)
+
+        if keys[pygame.K_f]:
+            actors[0].shoot_c(add_bullet)
 
         if keys[pygame.K_t]:
             if actors[0].target == actors[1]:
@@ -119,6 +124,9 @@ def main():
 
             for p in sa.beams:
                 internal_surface.blit(beam,(p.x,p.y))
+
+            for p in sa.missiles:
+                internal_surface.blit(missile,(p.x,p.y))
 
             blit_centered(internal_surface, ship[sa.team][sa.direction], (sa.x,sa.y), sa.size)
 
@@ -186,15 +194,20 @@ def bot_action(a, p, b, min, max):
             b.shoot_a(add_bullet)
         if b.bot_shot_choice == 2: 
             b.shoot_b(add_bullet)
+        if b.bot_shot_choice == 3: 
+            b.shoot_c(add_bullet)
 
     if b.weapon_ammo_a <= 0:
-        bravery -= 50
+        bravery -= 25
 
     if b.weapon_ammo_b <= 0:
+        bravery -= 25
+
+    if b.weapon_ammo_c <= 0:
         bravery -= 50
 
     if time.time() - b.bot_last_update_time > b.bot_timer:
-        b.bot_shot_choice =  random.randrange(0,3)
+        b.bot_shot_choice =  random.randrange(0,4)
     return bot_movement(a, p, b, min, max, bravery)
     
 

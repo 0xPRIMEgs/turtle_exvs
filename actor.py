@@ -8,6 +8,7 @@ class Actor:
         self.size = size
         self.bullets = []
         self.beams = []
+        self.missiles = []
         self.flames = []
         self.team = team
         self.speed = 8
@@ -24,8 +25,13 @@ class Actor:
         self.weapon_ammo_max_b = 5
         self.cool_down_b = 0.5
         self.last_shot_b = 0
-        self.reload_timer_b = 1
+        self.reload_timer_b = 2
         self.last_reload_b = 0 
+
+        self.weapon_ammo_c = 1
+        self.weapon_ammo_max_c = 1
+        self.reload_timer_c = 3
+        self.last_reload_c = 0 
 
         self.bot_timer = 0.5
         self.bot_last_movement = [False,False,False,False]
@@ -63,6 +69,14 @@ class Actor:
                 self.last_shot_b = time.time()
                 if self.weapon_ammo_b == 0:
                     self.last_reload_b = time.time()
+
+    def shoot_c(self, add_bullet):
+         if self.weapon_ammo_c > 0:
+            for i in range(8):
+                add_bullet(self.missiles, self.pos(), (self.angle - 40) + (10 * i), 6, 5)  # Add a point moving at 45 degrees at speed 5, lasting 3 seconds
+            self.weapon_ammo_c -= 1
+            if self.weapon_ammo_c == 0:
+                self.last_reload_c = time.time()
 
     def map_collision_check(self, arena_map_array, move_array, speed):
         result = 1
@@ -129,6 +143,10 @@ class Actor:
         if self.weapon_ammo_b == 0:
             if time.time() - self.last_reload_b > self.reload_timer_b:
                 self.weapon_ammo_b = self.weapon_ammo_max_b
+
+        if self.weapon_ammo_c == 0:
+            if time.time() - self.last_reload_c > self.reload_timer_c:
+                self.weapon_ammo_c = self.weapon_ammo_max_c
 
         dist = math.sqrt((self.x - self.target.x) ** 2 + (self.y - self.target.y) ** 2)
         if dist < 360:
