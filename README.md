@@ -7,3 +7,5 @@ Run the game with:
     uv run main.py
 
 It is currently a early WIP.
+
+Controls: WSAD to move, Q to quit, E,R,F to shoot bullets, beam, missiles respectively, T to change target.
