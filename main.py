@@ -8,7 +8,7 @@ def main():
     print("Hello from turtle-exvs!")
     pygame.init()
 
-    size = width, height = 640, 480
+    size = width, height = 1280, 720
     black = 0, 0, 0
     flicker = False
 
@@ -18,7 +18,9 @@ def main():
 
     ship = [
             [img("turtle1w.png"),img("turtle1s.png"),img("turtle1a.png"),img("turtle1d.png")],
-            [img("turtle2w.png"),img("turtle2s.png"),img("turtle2a.png"),img("turtle2d.png")]
+            [img("turtle2w.png"),img("turtle2s.png"),img("turtle2a.png"),img("turtle2d.png")],
+            [img("turtle2bw.png"),img("turtle2bs.png"),img("turtle2ba.png"),img("turtle2bd.png")],
+            [img("turtlebw.png"),img("turtlebs.png"),img("turtleba.png"),img("turtlebd.png")]
     ]
 
     lock_imgs = [
@@ -33,6 +35,13 @@ def main():
     beam = img("beam.png")
     missile = img("missile.png")
     sky = img("sky_seamless_texture_5921.jpg")
+
+    hud_bg = img("anti-tex1.png")
+
+    line_h = img("line_h.png")
+    line_v = img("line_v.png")
+    hud_panel_mock = img("hud_panel_mock.png")
+
 
     arena_arr = []
 
@@ -128,15 +137,31 @@ def main():
             for p in sa.missiles:
                 internal_surface.blit(missile,(p.x,p.y))
 
-            blit_centered(internal_surface, ship[sa.team][sa.direction], (sa.x,sa.y), sa.size)
+            blit_centered(internal_surface, ship[actor_index][sa.direction], (sa.x,sa.y), sa.size)
 
             for st in actors:
                 if sa.target == st:
                     blit_centered(internal_surface, lock_imgs[actor_index][sa.lock_type], (st.x,st.y), 80)
             actor_index += 1
 
-        scaled_surface = pygame.transform.scale(internal_surface, size)
-        screen.blit(scaled_surface, (0, 0))
+        internal_surface.blit(line_h,(0,actors[0].y))
+        internal_surface.blit(line_v,(actors[0].x,0))
+
+        #scaled_surface = pygame.transform.scale(internal_surface, size)
+        #screen.blit(scaled_surface, (0, 0))
+        
+        size_x, size_y = size
+        scaled_surface = pygame.transform.scale(internal_surface, (size_x - 200, size_y))
+
+        scaled_hud_bg = pygame.transform.scale(hud_bg, (200, size_y))
+
+        screen.blit(scaled_hud_bg)
+        for i in range(4):
+            blit_centered(screen, ship[i][0], (32,64 + (133 * i)), 64)
+            blit_centered(screen, hud_panel_mock, (96,64 + (133 * i)), 64)
+
+        
+        screen.blit(scaled_surface, (200, 0))
 
 
 
